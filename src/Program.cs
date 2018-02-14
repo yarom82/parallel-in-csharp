@@ -10,7 +10,8 @@ namespace parallel_in_csharp.src
         {
             var n = 10000000;
             SynchronousMethod(n);
-            ParallelMethod(n);
+            ParallelMethodWithBadLock(n);
+            ParallelMethodWithLock(n);
             ParallelMethodWithNoLock(n);
         }
 
@@ -33,7 +34,7 @@ namespace parallel_in_csharp.src
 
         private static Object thisLock = new Object();  
 
-        static void ParallelMethod(int n)
+        static void ParallelMethodWithBadLock(int n)
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -41,15 +42,38 @@ namespace parallel_in_csharp.src
             var counter = 0;
 
             Parallel.For(0, n, i => {
-                lock (thisLock)  
+                lock (thisLock)
                 {
                     if (Prime.IsPrime(i))
+                    {
                         counter++;
+                    }
                 }
             });
 
             stopwatch.Stop();
-            Logger.LogStats(stopwatch, counter, "ParallelMethod");
+            Logger.LogStats(stopwatch, counter, "ParallelMethodWithBadLock");
+        }
+
+        static void ParallelMethodWithLock(int n)
+        {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            var counter = 0;
+
+            Parallel.For(0, n, i => {
+                if (Prime.IsPrime(i))
+                {
+                    lock (thisLock)
+                    {
+                        counter++;
+                    }
+                }
+            });
+
+            stopwatch.Stop();
+            Logger.LogStats(stopwatch, counter, "ParallelMethodWithLock");
         }
 
         static void ParallelMethodWithNoLock(int n)
